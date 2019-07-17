@@ -1,5 +1,10 @@
 # PyCharm
 .idea
+# locally checked out repos
+repos/*
+- repos/README.md
+
+# standard python ignore file
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
