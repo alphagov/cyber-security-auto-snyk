@@ -103,6 +103,7 @@ class GithubAuditor():
             print(repo.name)
 
     def clone_team_repos(self, org_name, team_slug):
+        initial_directory = os.getcwd()
         repos = self.get_team_repos(org_name, team_slug)
         checkout_into = f"repos/{org_name}/{team_slug}"
         os.makedirs(checkout_into, exist_ok=True)
@@ -110,12 +111,15 @@ class GithubAuditor():
         for repo in repos:
             is_checked_out = os.path.exists(f"{checkout_into}/{repo.name}")
             if not repo.private:
-                self.clone_repo(repo, checkout_into)
                 # if it's already there make sure it's current
                 if is_checked_out:
-                    os.chdir(repo.name)
-                    os.system("git reset --hard origin/master")
-                    os.chdir("..")
+                    os.chdir(checkout_into)
+                    print(os.getcwd())
+                    # os.system("git reset --hard origin/master")
+                    # os.system("git pull")
+                    os.chdir(initial_directory)
+                else:
+                    self.clone_repo(repo, checkout_into)
                 cloned.append(repo)
         return cloned
 

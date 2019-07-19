@@ -1,8 +1,13 @@
 # PyCharm
 .idea
+
 # locally checked out repos
 repos/*
 - repos/README.md
+
+# snyk test json results files organised by org and team and date
+results/*
+- results/README.md
 
 # standard python ignore file
 # Byte-compiled / optimized / DLL files
