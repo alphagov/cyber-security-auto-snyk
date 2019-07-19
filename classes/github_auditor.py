@@ -136,3 +136,6 @@ class GithubAuditor():
         #os.removedirs(checkout_into)
         shutil.rmtree(checkout_into)
 
+    def say(self, text):
+        self.github.octocat(say=text)
+

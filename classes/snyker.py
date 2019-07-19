@@ -34,24 +34,25 @@ class Snyker():
         teams = self.github_auditor.get_org_teams(org_name)
 
         for team in teams:
-            team_slug = team.slug
-            self._audit_team(org_name, team)
+            repos = self.github_auditor.clone_team_repos(org_name, team.slug)
+            self._audit_team(org_name, team, repos)
 
-    def _audit_team(self, org_name, team):
+    def _audit_team(self, org_name, team, repos):
 
         return_to = os.getcwd()
-        checkout_into = f"repos/{org_name}/{team_slug}"
-        os.chdir(checkout_into)
-        team_slug = team.slug
-        print(f"{org_name}: {team_slug}")
 
-        repos = self.github_auditor.clone_team_repos(org_name, team_slug)
+        checkout_into = f"repos/{org_name}/{team.slug}"
+        os.makedirs(checkout_into, exist_ok=True)
+        os.chdir(checkout_into)
+
+        print(f"{org_name}: {team.slug}")
+
         for repo in repos:
             print(f" -- {repo.name}")
-            self._test_repo(repo)
+            self._audit_repo(repo)
 
         os.chdir(return_to)
-        self.tidy(org_name, team_slug)
+        self.tidy(org_name, team.slug)
 
     def tidy(self, org_name, team_slug):
         self.github_auditor.empty_team_repos(org_name, team_slug)
@@ -69,7 +70,15 @@ class Snyker():
         here = os.getcwd()
 
         self._install()
-        self._recursive_dependency_search(here)
+        self._recursive_dependency_search(here, self._test)
+
+        os.chdir("..")
+
+    def _audit_repo(self, repo):
+        os.chdir(repo.name)
+        here = os.getcwd()
+
+        self._recursive_dependency_search(here, self._record)
 
         os.chdir("..")
 
@@ -133,9 +142,14 @@ class Snyker():
         today = datetime.now(timezone.utc).strftime("%Y%m%d")
         save_into = f"{here}/{today}".replace("repos", "results")
         os.makedirs(save_into, exist_ok=True)
-        shutil.copyfile(file, save_into)
+        shutil.copyfile(file, f"{save_into}/{file}")
 
-    def _recursive_dependency_search(self, path):
+    def _test(self, lang, file):
+        prepared = self._prepare(lang, file)
+        if prepared:
+            self._run()
+
+    def _recursive_dependency_search(self, path, then):
 
         return_to = os.getcwd()
         dependency_files = self._get_dependency_files()
@@ -144,14 +158,15 @@ class Snyker():
         #for sub_directory in os.walk(path):
         for file in os.listdir(path):
             if os.path.isdir(f"{path}/{file}"):
-                self._recursive_dependency_search(f"{path}/{file}")
+                self._recursive_dependency_search(f"{path}/{file}", then)
             else:
                 if file in dependency_filenames:
                     lang = dependency_files[file]
                     os.chdir(path)
                     print(f"{path} contains a dependency file: {file} of type: {lang}")
 
-                    self._record(lang, file)
+                    then(lang, file)
+                    # self._record(lang, file)
 
                     # prepared = self._prepare(lang, file)
                     # if prepared:
